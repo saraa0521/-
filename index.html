@@ -143,7 +143,7 @@
     </select>
 
     <label>상품 선택</label>
-    <select id="product">
+    <select id="product" disabled>
       <option value="SunJoy Global">SunJoy Global</option>
       <option value="Chubb MyLegacy">Chubb MyLegacy Insurance Plan III</option>
     </select>
@@ -174,7 +174,7 @@
     <div class="result-box" id="output"></div>
 
     <div id="emailOptIn" style="display:none; margin-top:2rem;">
-      <label><input type="checkbox" id="sendEmailToggle" onchange="toggleEmailInput()"> 결과를 이메일로 받기</label>
+      <label style="font-weight:600;"><input type="checkbox" id="sendEmailToggle" onchange="toggleEmailInput()" style="transform: scale(1.4); margin-right: 8px;"> 결과를 이메일로 받기 (이메일을 입력해주세요)</label>
       <input type="email" id="userEmail" placeholder="예: your@email.com" style="display:none; margin-top:1rem;" />
       <button onclick="sendEmail()" style="display:none; margin-top:1rem; background:#ff9800;">✉️ 결과 이메일로 받기</button>
     </div>
@@ -183,16 +183,41 @@
 
     <button onclick="saveSimulation()" style="margin-top: 1rem; background:#6c5ce7; color:white;">💾 설계 저장하기</button>
     <div id="savedResults" style="margin-top: 2rem;"></div>
+    <button onclick="compareSimulations()" style="margin-top: 1rem; background:#fdcb6e; color:#222;">📊 설계 비교하기</button>
 
-    <button onclick="window.open('https://pf.kakao.com/_your_channel_code', '_blank')" style="margin-top: 2rem; background-color: #00b894; color: white; border: none; padding: 0.9rem 2rem; border-radius: 10px; cursor: pointer;">💬 상담 신청하기</button>
+    <button onclick="window.open('https://pf.kakao.com/_your_channel_code', '_blank')" style="margin-top: 2rem; background-color: #00b894; color: white; border: none; padding: 0.9rem 2rem; border-radius: 10px; cursor: pointer; margin-left: 0.5rem; margin-right: 0.5rem;">💬 상담 신청하기</button>
 
-    <button onclick="copyLink()" style="margin-top: 1rem; margin-left: 1rem; background:#6c757d; color:white; border: none; padding: 0.9rem 2rem; border-radius: 10px; cursor: pointer;">🔗 결과 링크 복사하기</button>
+    <button onclick="copyLink()" style="margin-top: 1rem; background:#6c757d; color:white; border: none; padding: 0.9rem 2rem; border-radius: 10px; cursor: pointer; margin-left: 0.5rem; margin-right: 0.5rem;">🔗 결과 링크 복사하기</button>
     <span id="copyMsg" style="font-size:0.9rem; margin-left:10px; color:green;"></span>
   <div style="margin-top: 3rem;">
-  <iframe src="https://calendar.google.com/calendar/embed?src=ko.south_korea%23holiday%40group.v.calendar.google.com&ctz=Asia%2FSeoul" style="border: 0" width="100%" height="600" frameborder="0" scrolling="no"></iframe>
+  <div style="margin-top: 2rem;">
+  <h3>📅 상담 가능한 날짜와 시간을 선택하세요</h3>
+  <label for="appointment-date">날짜 선택</label>
+  <input type="date" id="appointment-date" />
+
+  <label for="appointment-time" style="margin-top:1rem;">시간 선택</label>
+  <select id="appointment-time">
+    <option>10:00 AM</option>
+    <option>11:00 AM</option>
+    <option>2:00 PM</option>
+    <option>4:00 PM</option>
+    <option>6:00 PM</option>
+  </select>
+</div>
 </div>
 </main>
 <script>
+function autoSelectProduct() {
+  const company = document.getElementById('company').value;
+  const productSelect = document.getElementById('product');
+  productSelect.disabled = false;
+  if (company === 'Sun Life') {
+    productSelect.value = 'SunJoy Global';
+  } else if (company === 'Chubb') {
+    productSelect.value = 'Chubb MyLegacy';
+  }
+}
+
 function simulate() {
   const startAge = parseInt(document.getElementById('startAge').value);
   const annualPremium = parseFloat(document.getElementById('annualPremium').value);
@@ -217,6 +242,7 @@ function simulate() {
     <p>총 연금 인출 가능 금액: $${withdrawFixedAmount.toLocaleString()} × ${totalWithdrawYears}년 = $${totalWithdrawAmount.toLocaleString()}</p>
     <p>총 수익금액: $${totalEarnings.toLocaleString()}</p>
     <p>총 수익률: ${totalROI.toFixed(2)}%</p>
+    <p style="font-size: 0.9rem; color: #666;">※ 위 시뮬레이션은 예상치이며, 실제 수익은 변동될 수 있습니다.</p>
     <p>${maturityAge}세 사망보험금: $${deathBenefit.toLocaleString()}</p>
   `;
 
@@ -296,6 +322,24 @@ function renderSavedResults() {
 }
 
 window.onload = renderSavedResults;
+
+// 설계 비교 기능: 최근 저장된 두 개 결과 비교 (단순 문자열 기준)
+function compareSimulations() {
+  const history = JSON.parse(localStorage.getItem('simResults') || '[]');
+  if (history.length < 2) {
+    alert('비교하려면 최소 2개의 설계를 저장해야 합니다.');
+    return;
+  }
+  const lastTwo = history.slice(-2);
+  const comparison = `
+    <h3>📊 설계 비교</h3>
+    <div style='display:flex; gap:1rem; flex-wrap:wrap;'>
+      <div style='flex:1; min-width:300px; border:1px solid #ccc; padding:1rem;'>${lastTwo[0]}</div>
+      <div style='flex:1; min-width:300px; border:1px solid #ccc; padding:1rem;'>${lastTwo[1]}</div>
+    </div>
+  `;
+  document.getElementById('savedResults').insertAdjacentHTML('beforeend', comparison);
+}
 </script>
 </body>
 </html>
