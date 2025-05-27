@@ -59,14 +59,14 @@
       border: 1px solid #ccc;
       margin-top: 0.3rem;
       background: #f9f9f9;
-      transition: border 0.3s ease;
+      color: #333;
     }
     input:focus, select:focus {
       border-color: #007aff;
       outline: none;
     }
     input::placeholder {
-      color: #bbb;
+      color: #aaa;
     }
     button {
       margin-top: 2rem;
@@ -96,6 +96,15 @@
       margin-top: 3rem;
       max-width: 100%;
     }
+    @media (max-width: 600px) {
+      main {
+        padding: 2rem 1rem;
+      }
+      button {
+        width: 100%;
+        padding: 1rem;
+      }
+    }
   </style>
 </head>
 <body>
@@ -104,6 +113,9 @@
     <p>연금 인출 + 해약 환급금 + 사망보장까지 한 눈에 계산</p>
   </header>
   <main>
+    <label>이메일 주소 (결과 받기)</label>
+    <input type="email" id="userEmail" placeholder="예: your@email.com" />
+
     <label>회사 선택</label>
     <select id="company" onchange="autoSelectProduct()">
       <option value="Sun Life">Sun Life Hong Kong Limited</option>
@@ -148,76 +160,5 @@
     <button onclick="copyLink()" style="margin-top: 1rem; margin-left: 1rem; background:#6c757d; color:white; border: none; padding: 0.9rem 2rem; border-radius: 10px; cursor: pointer;">🔗 결과 링크 복사하기</button>
     <span id="copyMsg" style="font-size:0.9rem; margin-left:10px; color:green;"></span>
   </main>
-  <script>
-    function autoSelectProduct() {
-      const company = document.getElementById('company').value;
-      const productSelect = document.getElementById('product');
-      if (company === 'Sun Life') {
-        productSelect.value = 'SunJoy Global';
-      } else if (company === 'Chubb') {
-        productSelect.value = 'Chubb MyLegacy';
-      }
-    }
-
-    function simulate() {
-      const startAge = parseInt(document.getElementById('startAge').value);
-      const annualPremium = parseFloat(document.getElementById('annualPremium').value);
-      const payPeriod = parseInt(document.getElementById('payPeriod').value);
-      const maturityAge = parseInt(document.getElementById('maturityAge').value);
-      const withdrawStartAge = parseInt(document.getElementById('withdrawStartAge').value);
-      const withdrawEndAge = parseInt(document.getElementById('withdrawEndAge').value);
-      const withdrawFixedAmount = parseFloat(document.getElementById('withdrawFixedAmount').value);
-
-      const totalPremium = annualPremium * payPeriod;
-      const totalWithdrawYears = withdrawEndAge - withdrawStartAge + 1;
-      const totalWithdrawAmount = withdrawFixedAmount * totalWithdrawYears;
-      const maturityRefund = totalPremium * 18.7;
-      const deathBenefit = totalPremium * 43.7;
-      const totalEarnings = totalWithdrawAmount + maturityRefund;
-      const totalROI = ((totalEarnings - totalPremium) / totalPremium) * 100;
-
-      const output = `
-        <h3>📊 ${maturityAge}세 만기시 예상 수익</h3>
-        <p>총 납입금: $${totalPremium.toLocaleString()}</p>
-        <p>${maturityAge}세 해약환급금: $${maturityRefund.toLocaleString()}</p>
-        <p>총 연금 인출 가능 금액: $${withdrawFixedAmount.toLocaleString()} × ${totalWithdrawYears}년 = $${totalWithdrawAmount.toLocaleString()}</p>
-        <p>총 수익금액: $${totalEarnings.toLocaleString()}</p>
-        <p>총 수익률: ${totalROI.toFixed(2)}%</p>
-        <p>${maturityAge}세 사망보험금: $${deathBenefit.toLocaleString()}</p>
-      `;
-
-      document.getElementById('output').innerHTML = output;
-
-      const labels = [];
-      const withdraws = [];
-      const refunds = [];
-      const deaths = [];
-
-      for (let age = startAge; age <= maturityAge; age++) {
-        labels.push(age);
-        withdraws.push(age >= withdrawStartAge && age <= withdrawEndAge ? withdrawFixedAmount : 0);
-        refunds.push(age === maturityAge ? maturityRefund : 0);
-        deaths.push(age === maturityAge ? deathBenefit : 0);
-      }
-
-      const ctx = document.getElementById('yearlyChart').getContext('2d');
-      new Chart(ctx, {
-        type: 'bar',
-        data: {
-          labels: labels,
-          datasets: [
-            { label: '연금 인출액', data: withdraws, backgroundColor: '#007aff' },
-            { label: '해약환급금', data: refunds, backgroundColor: '#00cec9' },
-            { label: '사망보험금', data: deaths, backgroundColor: '#ff7675' }
-          ]
-        },
-        options: {
-          responsive: true,
-          plugins: { legend: { position: 'top' }, title: { display: true, text: '연도별 수익 시뮬레이션' } },
-          scales: { y: { beginAtZero: true } }
-        }
-      });
-    }
-  </script>
 </body>
 </html>
