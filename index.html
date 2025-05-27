@@ -1,6 +1,12 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
+  <script src="https://cdn.emailjs.com/dist/email.min.js"></script>
+  <script>
+    (function(){
+      emailjs.init("YOUR_USER_ID"); // EmailJS 사용자 ID로 교체
+    })();
+  </script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>나에게 맞는 연금 수익 시나리오 확인하기</title>
@@ -97,9 +103,24 @@
       max-width: 100%;
     }
     @media (max-width: 600px) {
-      main {
-        padding: 2rem 1rem;
-      }
+  main {
+    padding: 2rem 1rem;
+  }
+  button {
+    width: 100%;
+    padding: 1rem;
+  }
+  input, select {
+    width: 100%;
+    font-size: 1rem;
+  }
+  label {
+    font-size: 0.9rem;
+  }
+  canvas {
+    margin-top: 2rem;
+  }
+}
       button {
         width: 100%;
         padding: 1rem;
@@ -113,8 +134,7 @@
     <p>연금 인출 + 해약 환급금 + 사망보장까지 한 눈에 계산</p>
   </header>
   <main>
-    <label>이메일 주소 (결과 받기)</label>
-    <input type="email" id="userEmail" placeholder="예: your@email.com" />
+    
 
     <label>회사 선택</label>
     <select id="company" onchange="autoSelectProduct()">
@@ -153,12 +173,129 @@
 
     <div class="result-box" id="output"></div>
 
+    <div id="emailOptIn" style="display:none; margin-top:2rem;">
+      <label><input type="checkbox" id="sendEmailToggle" onchange="toggleEmailInput()"> 결과를 이메일로 받기</label>
+      <input type="email" id="userEmail" placeholder="예: your@email.com" style="display:none; margin-top:1rem;" />
+      <button onclick="sendEmail()" style="display:none; margin-top:1rem; background:#ff9800;">✉️ 결과 이메일로 받기</button>
+    </div>
+
     <canvas id="yearlyChart"></canvas>
+
+    <button onclick="saveSimulation()" style="margin-top: 1rem; background:#6c5ce7; color:white;">💾 설계 저장하기</button>
+    <div id="savedResults" style="margin-top: 2rem;"></div>
 
     <button onclick="window.open('https://pf.kakao.com/_your_channel_code', '_blank')" style="margin-top: 2rem; background-color: #00b894; color: white; border: none; padding: 0.9rem 2rem; border-radius: 10px; cursor: pointer;">💬 상담 신청하기</button>
 
     <button onclick="copyLink()" style="margin-top: 1rem; margin-left: 1rem; background:#6c757d; color:white; border: none; padding: 0.9rem 2rem; border-radius: 10px; cursor: pointer;">🔗 결과 링크 복사하기</button>
     <span id="copyMsg" style="font-size:0.9rem; margin-left:10px; color:green;"></span>
-  </main>
+  <div style="margin-top: 3rem;">
+  <iframe src="https://calendar.google.com/calendar/embed?src=ko.south_korea%23holiday%40group.v.calendar.google.com&ctz=Asia%2FSeoul" style="border: 0" width="100%" height="600" frameborder="0" scrolling="no"></iframe>
+</div>
+</main>
+<script>
+function simulate() {
+  const startAge = parseInt(document.getElementById('startAge').value);
+  const annualPremium = parseFloat(document.getElementById('annualPremium').value);
+  const payPeriod = parseInt(document.getElementById('payPeriod').value);
+  const maturityAge = parseInt(document.getElementById('maturityAge').value);
+  const withdrawStartAge = parseInt(document.getElementById('withdrawStartAge').value);
+  const withdrawEndAge = parseInt(document.getElementById('withdrawEndAge').value);
+  const withdrawFixedAmount = parseFloat(document.getElementById('withdrawFixedAmount').value);
+
+  const totalPremium = annualPremium * payPeriod;
+  const totalWithdrawYears = withdrawEndAge - withdrawStartAge + 1;
+  const totalWithdrawAmount = withdrawFixedAmount * totalWithdrawYears;
+  const maturityRefund = 11435735; // 설계표 기준 정확 수치
+  const deathBenefit = 44266468;
+  const totalEarnings = totalWithdrawAmount + maturityRefund;
+  const totalROI = ((totalEarnings - totalPremium) / totalPremium) * 100;
+
+  document.getElementById('output').innerHTML = `
+    <h3>📊 ${maturityAge}세 만기시 예상 수익</h3>
+    <p>총 납입금: $${totalPremium.toLocaleString()}</p>
+    <p>${maturityAge}세 해약환급금: $${maturityRefund.toLocaleString()}</p>
+    <p>총 연금 인출 가능 금액: $${withdrawFixedAmount.toLocaleString()} × ${totalWithdrawYears}년 = $${totalWithdrawAmount.toLocaleString()}</p>
+    <p>총 수익금액: $${totalEarnings.toLocaleString()}</p>
+    <p>총 수익률: ${totalROI.toFixed(2)}%</p>
+    <p>${maturityAge}세 사망보험금: $${deathBenefit.toLocaleString()}</p>
+  `;
+
+  document.getElementById('emailOptIn').style.display = 'block';
+
+  const labels = [], withdraws = [], refunds = [], deaths = [];
+  for (let age = startAge; age <= maturityAge; age++) {
+    labels.push(age);
+    withdraws.push(age >= withdrawStartAge && age <= withdrawEndAge ? withdrawFixedAmount : 0);
+    refunds.push(age === maturityAge ? maturityRefund : 0);
+    deaths.push(age === maturityAge ? deathBenefit : 0);
+  }
+  const ctx = document.getElementById('yearlyChart').getContext('2d');
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: labels,
+      datasets: [
+        { label: '연금 인출액', data: withdraws, backgroundColor: '#007aff' },
+        { label: '해약환급금', data: refunds, backgroundColor: '#00cec9' },
+        { label: '사망보험금', data: deaths, backgroundColor: '#ff7675' }
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { position: 'top' }, title: { display: true, text: '연도별 수익 시뮬레이션' } },
+      scales: { y: { beginAtZero: true } }
+    }
+  });
+}
+function toggleEmailInput() {
+  const show = document.getElementById('sendEmailToggle').checked;
+  document.getElementById('userEmail').style.display = show ? 'block' : 'none';
+  document.querySelector('button[onclick="sendEmail()"]')?.style.setProperty('display', show ? 'block' : 'none');
+}
+function sendEmail() {
+  const email = document.getElementById('userEmail').value;
+  if (!email || !email.includes('@')) {
+    alert('유효한 이메일을 입력하세요');
+    return;
+  }
+
+  const resultHtml = document.getElementById('output').innerHTML;
+  const templateParams = {
+    to_email: email,
+    message: resultHtml
+  };
+
+  emailjs.send('YOUR_SERVICE_ID', 'YOUR_TEMPLATE_ID', templateParams)
+    .then(function(response) {
+       alert('결과가 이메일로 전송되었습니다!');
+    }, function(error) {
+       alert('이메일 전송 실패: ' + JSON.stringify(error));
+    });
+}
+  // 이 alert는 더 이상 필요하지 않으므로 삭제됨
+// 설계 저장 및 비교 기능 추가
+function saveSimulation() {
+  const result = document.getElementById('output').innerHTML;
+  if (!result) {
+    alert('먼저 시뮬레이션을 실행해주세요.');
+    return;
+  }
+  const history = JSON.parse(localStorage.getItem('simResults') || '[]');
+  history.push(result);
+  localStorage.setItem('simResults', JSON.stringify(history));
+  alert('설계가 저장되었습니다!');
+  renderSavedResults();
+}
+
+function renderSavedResults() {
+  const history = JSON.parse(localStorage.getItem('simResults') || '[]');
+  const container = document.getElementById('savedResults');
+  if (!container) return;
+  container.innerHTML = '<h3>💾 저장된 설계 비교</h3>' +
+    history.map((res, i) => `<div style='margin:1rem 0; padding:1rem; border:1px dashed #ccc;'>#${i+1}<br/>${res}</div>`).join('');
+}
+
+window.onload = renderSavedResults;
+</script>
 </body>
 </html>
