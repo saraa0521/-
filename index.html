@@ -3,146 +3,143 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>경제 수익 시뮬레이터</title>
+  <title>보험 수익률 & 인출 시뮬레이터 + 설계표 분석</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
-      max-width: 700px;
-      margin: 30px auto;
-      padding: 20px;
-      line-height: 1.6;
+      background-color: #f4f6f9;
+      color: #333;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 0;
     }
-    label, input, select {
+    header {
+      background: linear-gradient(to right, #02457A, #0378A6);
+      color: white;
+      padding: 30px 20px;
+      text-align: center;
+    }
+    header img {
+      max-height: 60px;
+      margin-bottom: 10px;
+    }
+    main {
+      padding: 30px;
+    }
+    label, input, select, button {
       display: block;
       margin: 10px 0;
       font-size: 1rem;
     }
-    input[type="text"], select {
+    input[type="text"], input[type="file"], select {
       padding: 8px;
       width: 100%;
       max-width: 300px;
     }
     button {
-      padding: 10px 15px;
-      font-size: 1rem;
-      margin-top: 10px;
+      background-color: #0378A6;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #025e86;
     }
     canvas {
       margin-top: 40px;
     }
+    table {
+      margin-top: 20px;
+      width: 100%;
+      border-collapse: collapse;
+      background-color: white;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 6px 8px;
+      text-align: right;
+    }
+    th {
+      background-color: #f0f0f0;
+    }
   </style>
 </head>
 <body>
-  <h2>평소 평가 & 인출 시뮬레이터</h2>
+  <header>
+    <img src="https://gogoglobal.life/wp-content/uploads/2023/10/logo.svg" alt="gogoGLOBAL Logo">
+    <h2>📊 보험 시뮬레이터 & 설계표 IRR 분석기</h2>
+    <p>데이터 기반의 스마트한 보험 수익률 분석 도구</p>
+  </header>
+  <main>
+    <label>설계표 CSV 파일 업로드 (연도별 납입/인출/해약/사망)</label>
+    <input type="file" id="csvFile" accept=".csv">
+    <button onclick="parseCSV()">CSV 분석 실행</button>
 
-  <label>회사 선택</label>
-  <select id="company">
-    <option value="Sun Life">Sun Life Hong Kong Limited</option>
-    <option value="Chubb">Chubb Life Insurance Hong Kong Limited</option>
-  </select>
-
-  <label>상품 선택</label>
-  <select id="product">
-    <option value="SunJoy Global">SunJoy Global</option>
-    <option value="MyLegacy">Chubb MyLegacy Insurance Plan III</option>
-  </select>
-
-  <label>가입 나이</label>
-  <input type="text" id="age" value="40">
-
-  <label>연가 납입금액 ($)</label>
-  <input type="text" id="premium" value="10000">
-
-  <label>납입 기간 (년)</label>
-  <input type="text" id="years" value="2">
-
-  <label>만기 나이</label>
-  <input type="text" id="maturity" value="100">
-
-  <label>인출 시작 나이</label>
-  <input type="text" id="startWithdraw" value="65">
-
-  <label>인출 종료 나이</label>
-  <input type="text" id="endWithdraw" value="100">
-
-  <label>인출 금액 (% 납입구조보다)</label>
-  <input type="text" id="withdrawRate" value="10">
-
-  <button onclick="calculate()">계산하기</button>
-
-  <div id="result" style="margin-top:20px;"></div>
-
-  <canvas id="chart" width="600" height="300"></canvas>
-
+    <div id="csvResult"></div>
+    <canvas id="irrChart" width="700" height="300"></canvas>
+  </main>
   <script>
-    function calculate() {
-      const age = parseInt(document.getElementById('age').value);
-      const premium = parseInt(document.getElementById('premium').value);
-      const years = parseInt(document.getElementById('years').value);
-      const maturity = parseInt(document.getElementById('maturity').value);
-      const start = parseInt(document.getElementById('startWithdraw').value);
-      const end = parseInt(document.getElementById('endWithdraw').value);
-      const withdrawRate = parseFloat(document.getElementById('withdrawRate').value);
-      const totalPaid = premium * years;
-      const surrender = totalPaid * 18.7;
-      const death = totalPaid * 43.7;
-      const withdraw = totalPaid * (withdrawRate / 100);
-      const yearsWithdraw = end - start + 1;
-      const totalWithdraw = withdraw * yearsWithdraw;
-      const ratio = ((totalWithdraw + surrender) / totalPaid).toFixed(2);
+    function parseCSV() {
+      const file = document.getElementById('csvFile').files[0];
+      if (!file) return alert("CSV 파일을 선택해주세요");
 
-      document.getElementById('result').innerHTML = `
-        <h3>✅ 계산 결과</h3>
-        회사: ${document.getElementById('company').value}<br>
-        상품: ${document.getElementById('product').value}<br>
-        총 납입금: $${totalPaid.toLocaleString()}<br>
-        만기 해약확금: $${surrender.toLocaleString()}<br>
-        사망보호금: $${death.toLocaleString()}<br>
-        최대 연간 인출 가능 금액: $${withdraw.toLocaleString()}<br>
-        인출 금액 포함 합계: $${totalWithdraw.toLocaleString()}<br>
-        총수익: ${ratio}배
-      `;
+      Papa.parse(file, {
+        header: true,
+        skipEmptyLines: true,
+        complete: function(results) {
+          const data = results.data;
+          const age = [], premium = [], surrender = [], death = [], withdrawal = [], netCash = [];
 
-      // Chart
-      const labels = [];
-      const values = [];
-      for (let i = age + 1; i <= maturity; i++) {
-        labels.push(i);
-        if (i >= start && i <= end) {
-          values.push(withdraw);
-        } else {
-          values.push(0);
-        }
-      }
-      const ctx = document.getElementById('chart').getContext('2d');
-      if (window.chartInstance) {
-        window.chartInstance.destroy();
-      }
-      window.chartInstance = new Chart(ctx, {
-        type: 'bar',
-        data: {
-          labels: labels,
-          datasets: [{
-            label: '\uc5f0도\ubcc4 \uc778\ucd9c \uae08\uc561',
-            data: values,
-            backgroundColor: 'rgba(54, 162, 235, 0.6)'
-          }]
-        },
-        options: {
-          responsive: true,
-          plugins: {
-            legend: { display: true },
-            title: {
-              display: true,
-              text: '\uc5f0\ub3c4\ubcc4 \uc218\uc775 \uc2dc\uac01\ud654 \ucc28\ud2b8'
+          data.forEach(row => {
+            const yr = parseInt(row['Age'] || row['Year']);
+            age.push(yr);
+            const p = parseFloat(row['Premium']) || 0;
+            const w = parseFloat(row['Withdrawal']) || 0;
+            const s = parseFloat(row['Surrender']) || 0;
+            const d = parseFloat(row['Death']) || 0;
+            premium.push(p);
+            withdrawal.push(w);
+            surrender.push(s);
+            death.push(d);
+            const cf = -p + w + (s || d);
+            netCash.push(cf);
+          });
+
+          const totalIn = premium.reduce((a,b)=>a+b,0);
+          const totalOut = netCash.filter(v=>v>0).reduce((a,b)=>a+b,0);
+          const irr = (Math.pow((totalOut / totalIn), 1 / (age.length)) - 1) * 100;
+
+          document.getElementById('csvResult').innerHTML = `
+            <h3>🧾 설계표 분석 결과</h3>
+            전체 납입: $${totalIn.toLocaleString()}<br>
+            총 수령: $${totalOut.toLocaleString()}<br>
+            단순 IRR 추정: <b>${irr.toFixed(2)}%</b>
+            <table><thead><tr><th>나이</th><th>납입</th><th>인출</th><th>해약환급</th><th>사망보험금</th><th>Net Cash Flow</th></tr></thead><tbody>
+            ${age.map((a,i)=>`<tr><td>${a}</td><td>$${premium[i]||0}</td><td>$${withdrawal[i]||0}</td><td>$${surrender[i]||0}</td><td>$${death[i]||0}</td><td>$${netCash[i]}</td></tr>`).join('')}
+            </tbody></table>
+          `;
+
+          const ctx = document.getElementById('irrChart').getContext('2d');
+          if (window.irrChart) window.irrChart.destroy();
+          window.irrChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+              labels: age,
+              datasets: [
+                { label: 'Net Cash Flow', data: netCash, borderColor: 'green', borderWidth: 2, fill: false },
+                { label: 'Premium', data: premium.map(x=>-x), borderColor: 'red', borderDash: [5,5], fill: false }
+              ]
+            },
+            options: {
+              responsive: true,
+              plugins: { title: { display: true, text: '연도별 현금 흐름 및 납입 구조' } },
+              scales: { y: { beginAtZero: false } }
             }
-          },
-          scales: {
-            y: {
-              beginAtZero: true
-            }
-          }
+          });
         }
       });
     }
