@@ -5,74 +5,93 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>평생 받을 수 있는 연금 시뮬레이션 체험하기</title>
   <link href="https://fonts.googleapis.com/css2?family=Pretendard&display=swap" rel="stylesheet" />
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js">function copyLink() {
+  navigator.clipboard.writeText(window.location.href).then(() => {
+    document.getElementById('copyMsg').textContent = '복사 완료!';
+    setTimeout(() => document.getElementById('copyMsg').textContent = '', 2000);
+  });
+}
+</script>
   <style>
     body {
       font-family: 'Pretendard', sans-serif;
-      background-color: #f8f9fc;
+      background-color: #ffffff;
       margin: 0;
       padding: 0;
     }
     header {
-      background: linear-gradient(to right, #0d6efd, #00b4d8);
-      padding: 2rem 1rem;
+      background: #111;
+      padding: 3rem 1rem 2rem;
       color: white;
       text-align: center;
     }
     header h1 {
-      font-size: 1.75rem;
-      margin: 0.5rem 0;
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
     }
     header p {
-      margin: 0;
       font-size: 1rem;
-      font-weight: 300;
+      opacity: 0.75;
     }
     main {
-      width: 95%;
+      width: 100%;
       max-width: 900px;
-      padding: 2rem;
-      margin: auto;
-      background: white;
-      border-radius: 12px;
-      box-shadow: 0 0 20px rgba(0,0,0,0.05);
+      padding: 3rem 2rem;
+      margin: -2rem auto 2rem;
+      background: #fefefe;
+      border-radius: 20px;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.08);
     }
     label {
       display: block;
-      margin-top: 1rem;
+      margin-top: 1.5rem;
       font-weight: 600;
+      font-size: 0.95rem;
     }
     input, select {
-      padding: 0.6rem;
+      padding: 0.75rem 1rem;
       font-size: 1rem;
       width: 100%;
-      max-width: 400px;
-      border-radius: 6px;
+      max-width: 420px;
+      border-radius: 10px;
       border: 1px solid #ccc;
       margin-top: 0.3rem;
-      color: #333;
+      background: #f9f9f9;
+      transition: border 0.3s ease;
+    }
+    input:focus, select:focus {
+      border-color: #007aff;
+      outline: none;
     }
     input::placeholder {
-      color: #aaa;
+      color: #bbb;
     }
     button {
-      margin-top: 1.5rem;
-      padding: 0.8rem 1.5rem;
+      margin-top: 2rem;
+      padding: 0.9rem 2rem;
       font-size: 1rem;
-      background-color: #0d6efd;
+      background-color: #007aff;
       color: white;
       border: none;
-      border-radius: 6px;
+      border-radius: 10px;
       cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    button:hover {
+      background-color: #0059cc;
     }
     .result-box {
-      margin-top: 2rem;
-      background: #f1f3f5;
-      padding: 1rem;
-      border-radius: 10px;
+      margin-top: 2.5rem;
+      background: #f4f6f8;
+      padding: 1.5rem;
+      border-radius: 12px;
+      box-shadow: inset 0 0 10px rgba(0,0,0,0.03);
+    }
+    .result-box h3 {
+      margin-top: 0;
     }
     canvas {
-      margin-top: 2rem;
+      margin-top: 3rem;
       max-width: 100%;
     }
   </style>
@@ -123,6 +142,121 @@
     <canvas id="yearlyChart"></canvas>
     <canvas id="surrenderChart"></canvas>
     <canvas id="deathChart"></canvas>
-  </main>
+  <button onclick="window.open('https://pf.kakao.com/_your_channel_code', '_blank')" style="margin-top: 2rem; background-color: #00b894; color: white; border: none; padding: 0.9rem 2rem; border-radius: 10px; cursor: pointer;">💬 상담 신청하기</button>
+
+<button onclick="copyLink()" style="margin-top: 1rem; margin-left: 1rem; background:#6c757d; color:white; border: none; padding: 0.9rem 2rem; border-radius: 10px; cursor: pointer;">🔗 결과 링크 복사하기</button>
+<span id="copyMsg" style="font-size:0.9rem; margin-left:10px; color:green;"></span>
+</main>
+<script>
+function simulate() {
+  const startAge = parseInt(document.getElementById('startAge').value);
+  const annualPremium = parseInt(document.getElementById('annualPremium').value);
+  const payPeriod = parseInt(document.getElementById('payPeriod').value);
+  const maturityAge = parseInt(document.getElementById('maturityAge').value);
+  const withdrawStartAge = parseInt(document.getElementById('withdrawStartAge').value);
+  const withdrawEndAge = parseInt(document.getElementById('withdrawEndAge').value);
+  const withdrawFixedAmount = parseInt(document.getElementById('withdrawFixedAmount').value);
+
+  const totalPaid = annualPremium * payPeriod;
+  const withdrawalYears = withdrawEndAge - withdrawStartAge + 1;
+  const totalWithdrawal = withdrawFixedAmount * withdrawalYears;
+
+  const surrenderValue = Math.round(totalPaid * 18.7);
+  const deathBenefit = Math.round(totalPaid * 43.7);
+  const totalGain = totalWithdrawal + surrenderValue;
+  const totalReturnRate = ((totalGain - totalPaid) / totalPaid * 100).toFixed(2);
+
+  document.getElementById('output').innerHTML = `
+    <h3>💡 계산 결과</h3>
+    <p><strong>총 납입금:</strong> $${totalPaid.toLocaleString()}</p>
+    <p><strong>만기 해약환급금:</strong> $${surrenderValue.toLocaleString()}</p>
+    <p><strong>사망보험금:</strong> $${deathBenefit.toLocaleString()}</p>
+    <p><strong>총 연금 인출 가능 금액:</strong> $${withdrawFixedAmount.toLocaleString()} × ${withdrawalYears}년 = $${totalWithdrawal.toLocaleString()}</p>
+    <p><strong>총 수익금액:</strong> $${totalGain.toLocaleString()}</p>
+    <p><strong>총 수익률:</strong> ${totalReturnRate}%</p>
+  `;
+
+  const labels = [];
+  const dataWithdraw = [];
+  const dataSurrender = [];
+  const dataDeath = [];
+
+  let cumulativeWithdraw = 0;
+  for (let age = startAge; age <= maturityAge; age++) {
+    labels.push(age.toString());
+
+    let withdraw = (age >= withdrawStartAge && age <= withdrawEndAge) ? withdrawFixedAmount : 0;
+    cumulativeWithdraw += withdraw;
+
+    dataWithdraw.push(withdraw);
+    dataSurrender.push(age === maturityAge ? surrenderValue : null);
+    dataDeath.push(age === maturityAge ? deathBenefit : null);
+  }
+
+  const chartData = {
+    labels,
+    datasets: [
+      {
+        label: '연간 인출액',
+        data: dataWithdraw,
+        borderColor: '#0d6efd',
+        backgroundColor: 'rgba(13, 110, 253, 0.4)',
+        tension: 0.3,
+        yAxisID: 'y',
+      },
+      {
+        label: '해약환급금',
+        data: dataSurrender,
+        borderColor: '#ffc107',
+        backgroundColor: 'rgba(255, 193, 7, 0.2)',
+        tension: 0.3,
+        yAxisID: 'y',
+      },
+      {
+        label: '사망보험금',
+        data: dataDeath,
+        borderColor: '#dc3545',
+        backgroundColor: 'rgba(220, 53, 69, 0.1)',
+        borderDash: [4, 4],
+        tension: 0.3,
+        yAxisID: 'y',
+      }
+    ]
+  };
+
+  const config = {
+    type: 'line',
+    data: chartData,
+    options: {
+      responsive: true,
+      interaction: {
+        mode: 'index',
+        intersect: false,
+      },
+      stacked: false,
+      plugins: {
+        title: {
+          display: true,
+          text: '연도별 인출/해약환급금/사망보험금 시뮬레이션'
+        }
+      },
+      scales: {
+        y: {
+          type: 'linear',
+          display: true,
+          position: 'left',
+          ticks: {
+            callback: value => `$${value.toLocaleString()}`
+          }
+        }
+      }
+    }
+  };
+
+  if (window.chartInstance) window.chartInstance.destroy();
+  const ctx = document.getElementById('yearlyChart').getContext('2d');
+  window.chartInstance = new Chart(ctx, config);
+}
+</script>
 </body>
 </html>
