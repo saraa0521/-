@@ -5,46 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>고객용 보험 시뮬레이터</title>
   <link href="https://fonts.googleapis.com/css2?family=Pretendard&display=swap" rel="stylesheet" />
-  <script src="https://cdn.jsdelivr.net/npm/chart.js">function copyLink() {
-  navigator.clipboard.writeText(window.location.href).then(() => {
-    document.getElementById('copyMsg').textContent = '복사 완료!';
-    setTimeout(() => document.getElementById('copyMsg').textContent = '', 2000);
-  });
-}
-function copyLink() {
-  navigator.clipboard.writeText(window.location.href).then(() => {
-    document.getElementById('copyMsg').textContent = '복사 완료!';
-    setTimeout(() => document.getElementById('copyMsg').textContent = '', 2000);
-  });
-}
-
-function fetchPolicyInfo() {
-  const customerData = {
-    name: '홍길동',
-    policyNumber: '123456789',
-    company: document.getElementById('company').value,
-    product: document.getElementById('product').value
-  };
-
-  fetch("https://n8n.yourdomain.com/webhook/policy-query", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(customerData)
-  })
-  .then(res => res.json())
-  .then(data => {
-    document.getElementById("policyInfoBox").innerHTML = `
-      <p><strong>해약환급금:</strong> $${Number(data.surrender || 120000).toLocaleString()}</p>
-      <p><strong>납입 누계:</strong> $${Number(data.totalPaid || 50000).toLocaleString()}</p>
-    `;
-  })
-  .catch(() => {
-    document.getElementById("policyInfoBox").innerHTML = `<p style='color:red;'>❗ 조회에 실패했습니다. (임시 값 표시)</p>
-      <p><strong>해약환급금:</strong> $120,000</p>
-      <p><strong>납입 누계:</strong> $50,000</p>`;
-  });
-}
-</script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     body {
       font-family: 'Pretendard', sans-serif;
@@ -70,7 +31,6 @@ function fetchPolicyInfo() {
       width: 95%;
       max-width: 900px;
       padding: 2rem;
-      max-width: 900px;
       margin: auto;
       background: white;
       border-radius: 12px;
@@ -89,6 +49,7 @@ function fetchPolicyInfo() {
       border-radius: 6px;
       border: 1px solid #ccc;
       margin-top: 0.3rem;
+      color: gray;
     }
     button {
       margin-top: 1.5rem;
@@ -119,201 +80,34 @@ function fetchPolicyInfo() {
     <p>나에게 맞는 보험 수익 시나리오 확인하기</p>
   </header>
   <main>
-    <button onclick="fetchPolicyInfo()" style="margin-bottom: 1rem; background-color: #ffc107; color: black;">📡 해약금/납입금 원수사 조회</button>
-    <div id="policyInfoBox" style="font-size: 0.95rem; margin-bottom: 1rem;"></div>
-    <label for="company">회사 선택</label>
-    <select id="company" onchange="updateProductOptions()">
-      <option value="">-- 선택하세요 --</option>
-      <option value="Sun Life">Sun Life Hong Kong Limited</option>
-      <option value="Chubb Life">Chubb Life Insurance Hong Kong Limited</option>
-    </select>
-
-    <label for="product">상품 선택</label>
-    <select id="product"></select>
-
     <label>가입 나이</label>
-    <input type="text" id="startAge" placeholder="예: 40" value="40" style="color: gray;" />
+    <input type="text" id="startAge" placeholder="예: 40" value="40" />
 
     <label>연간 납입 금액 (USD)</label>
-    <input type="text" id="annualPremium" placeholder="예: 10000" value="10000" style="color: gray;" />
+    <input type="text" id="annualPremium" placeholder="예: 10000" value="10000" />
 
     <label>납입 기간 (년)</label>
-    <input type="text" id="payPeriod" placeholder="예: 2" value="2" style="color: gray;" />
+    <input type="text" id="payPeriod" placeholder="예: 2" value="2" />
 
     <label>만기 나이</label>
-    <input type="text" id="maturityAge" placeholder="예: 100" value="100" style="color: gray;" />
+    <input type="text" id="maturityAge" placeholder="예: 100" value="100" />
 
     <label>인출 시작 나이</label>
-    <input type="text" id="withdrawStartAge" placeholder="예: 65" value="65" style="color: gray;" />
+    <input type="text" id="withdrawStartAge" placeholder="예: 65" value="65" />
 
     <label>인출 종료 나이</label>
-    <input type="text" id="withdrawEndAge" placeholder="예: 100" value="100" style="color: gray;" />
+    <input type="text" id="withdrawEndAge" placeholder="예: 100" value="100" />
 
     <label>희망 연간 인출 금액 (USD)</label>
-    <input type="text" id="withdrawFixedAmount" placeholder="예: 40000" value="40000" style="color: gray;" />
+    <input type="text" id="withdrawFixedAmount" placeholder="예: 40000" value="40000" />
 
     <button onclick="simulate()">계산하기</button>
 
     <div class="result-box" id="output"></div>
-<table id="resultTable" style="width:100%; margin-top:2rem; border-collapse:collapse; font-size:0.9rem;"><thead><tr><th style='border:1px solid #ccc;'>나이</th><th style='border:1px solid #ccc;'>연금 인출액</th><th style='border:1px solid #ccc;'>누적 인출액</th></tr></thead><tbody id="tableBody"></tbody></table>
-<canvas id="yearlyChart"></canvas>
-<canvas id="surrenderChart"></canvas>
-<canvas id="deathChart"></canvas>
-  <button style="margin-top: 2rem; background-color: #00b894;" onclick="window.open('https://pf.kakao.com/_YOUR_CHANNEL_CODE', '_blank')">카카오톡 상담 신청하기</button>
-<button onclick="copyLink()" style="margin-top: 1rem; background:#6c757d; color:white;">🔗 결과 링크 복사하기</button>
-<span id="copyMsg" style="font-size:0.9rem; margin-left:10px; color:green;"></span>
-</main>
-  <script>
-    const productOptions = {
-      "Sun Life": [
-        "SunJoy Global - 2년 (Minimum Annual Premium: $15,000)",
-        "SunJoy Global - 5년 (Minimum Annual Premium: $3,000)"
-      ],
-      "Chubb Life": [
-        "Chubb MyLegacy Insurance Plan III - 2년",
-        "Chubb MyLegacy Insurance Plan III - 5년",
-        "Chubb MyLegacy Insurance Plan III - 8년",
-        "Chubb MyLegacy Insurance Plan III - 16년"
-      ]
-    };
 
-    function updateProductOptions() {
-      const company = document.getElementById("company").value;
-      const productSelect = document.getElementById("product");
-      productSelect.innerHTML = "";
-      if (productOptions[company]) {
-        productOptions[company].forEach(p => {
-          const opt = document.createElement("option");
-          opt.value = p;
-          opt.textContent = p;
-          productSelect.appendChild(opt);
-        });
-      }
-    }
-
-    function simulate() {
-      const startAge = parseInt(document.getElementById('startAge').value);
-      const annualPremium = parseFloat(document.getElementById('annualPremium').value);
-      const payPeriod = parseInt(document.getElementById('payPeriod').value);
-      const maturityAge = parseInt(document.getElementById('maturityAge').value);
-      const withdrawStart = parseInt(document.getElementById('withdrawStartAge').value);
-      const withdrawEnd = parseInt(document.getElementById('withdrawEndAge').value);
-      const withdrawAmount = parseFloat(document.getElementById('withdrawFixedAmount').value);
-
-      const totalPaid = annualPremium * payPeriod;
-      const withdrawYears = withdrawEnd - withdrawStart + 1;
-      const totalWithdraw = withdrawYears * withdrawAmount;
-      const projectedSurrender = totalPaid * 18.7;
-      const projectedDeath = totalPaid * 43.7;
-      const totalReturn = totalWithdraw + projectedSurrender;
-      const roi = ((totalReturn) / totalPaid * 100).toFixed(2);
-      let tableRows = "";
-      let cumulative = 0;
-      for (let age = startAge; age <= maturityAge; age++) {
-        const amount = (age >= withdrawStart && age <= withdrawEnd) ? withdrawAmount : 0;
-        cumulative += amount;
-        tableRows += `<tr><td style='border:1px solid #ccc; text-align:center;'>${age}</td><td style='border:1px solid #ccc; text-align:right;'>$${amount.toLocaleString()}</td><td style='border:1px solid #ccc; text-align:right;'>$${cumulative.toLocaleString()}</td></tr>`;
-      }
-      document.getElementById('tableBody').innerHTML = tableRows;
-
-      document.getElementById('output').innerHTML = `
-        <h3>💡 계산 결과</h3>
-        <p><strong>총 납입금:</strong> $${totalPaid.toLocaleString()}</p>
-        <p><strong>만기 해약환급금:</strong> $${projectedSurrender.toLocaleString()}</p>
-        <p><strong>사망보험금:</strong> $${projectedDeath.toLocaleString()}</p>
-        <p><strong>총 연금 인출 가능 금액:</strong> $${withdrawAmount.toLocaleString()} × ${withdrawYears}년 = $${totalWithdraw.toLocaleString()}</p>
-        <p><strong>총 수익금액:</strong> $${totalReturn.toLocaleString()}</p>
-        <p><strong>총 수익률:</strong> ${roi}%</p>
-      `;
-
-      const labels = [];
-      const data = [];
-      for (let age = startAge; age <= maturityAge; age++) {
-        labels.push(age);
-        if (age >= withdrawStart && age <= withdrawEnd) {
-          data.push(withdrawAmount);
-        } else {
-          data.push(0);
-        }
-      }
-
-      const ctx = document.getElementById('yearlyChart');
-      new Chart(ctx, {
-        type: 'bar',
-        data: {
-          labels: labels,
-          datasets: [{
-            label: '연도별 연금 인출 금액',
-            data: data,
-            backgroundColor: '#0d6efd'
-          }]
-        },
-        options: {
-          responsive: true,
-          plugins: { title: { display: true, text: '연금 인출 흐름' } },
-          scales: {
-            y: {
-              beginAtZero: true,
-              ticks: {
-                callback: value => `$${value.toLocaleString()}`
-              }
-            }
-          }
-        }
-      });
-
-      const ctx2 = document.getElementById('surrenderChart');
-      new Chart(ctx2, {
-        type: 'line',
-        data: {
-          labels: labels,
-          datasets: [{
-            label: '예상 해약환급금',
-            data: labels.map(age => age === maturityAge ? projectedSurrender : 0),
-            borderColor: '#fd7e14',
-            tension: 0.2
-          }]
-        },
-        options: {
-          responsive: true,
-          plugins: { title: { display: true, text: '만기 해약환급금' } },
-          scales: {
-            y: {
-              beginAtZero: true,
-              ticks: {
-                callback: value => `$${value.toLocaleString()}`
-              }
-            }
-          }
-        }
-      });
-
-      const ctx3 = document.getElementById('deathChart');
-      new Chart(ctx3, {
-        type: 'line',
-        data: {
-          labels: labels,
-          datasets: [{
-            label: '예상 사망보험금',
-            data: labels.map(age => age === maturityAge ? projectedDeath : 0),
-            borderColor: '#e74c3c',
-            tension: 0.2
-          }]
-        },
-        options: {
-          responsive: true,
-          plugins: { title: { display: true, text: '사망보험금' } },
-          scales: {
-            y: {
-              beginAtZero: true,
-              ticks: {
-                callback: value => `$${value.toLocaleString()}`
-              }
-            }
-          }
-        }
-      });
-    }
-  </script>
+    <canvas id="yearlyChart"></canvas>
+    <canvas id="surrenderChart"></canvas>
+    <canvas id="deathChart"></canvas>
+  </main>
 </body>
 </html>
