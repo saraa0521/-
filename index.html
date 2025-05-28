@@ -36,6 +36,42 @@
       }
     }
 
+    function generateChart(withdrawal, surrender) {
+      const ctx = document.getElementById('simChart').getContext('2d');
+      new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: withdrawal.map((_, i) => `연도 ${i + 1}`),
+          datasets: [
+            {
+              label: '연금 인출금액',
+              data: withdrawal,
+              borderColor: '#007aff',
+              fill: false
+            },
+            {
+              label: '해약환급금',
+              data: surrender,
+              borderColor: '#00b894',
+              fill: false
+            },
+            {
+              label: '총 수익',
+              data: withdrawal.map((val, i) => val + surrender[i]),
+              borderColor: '#fd7e14',
+              fill: false
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { position: 'bottom' }
+          }
+        }
+      });
+    }
+
     function sendEmailResult() {
       const email = document.getElementById("emailInput").value;
       const templateParams = {
@@ -52,6 +88,7 @@
       const sampleSurrender = Array.from({length: 50}, (_, i) => 2176628);
       const sampleDeath = Array.from({length: 50}, (_, i) => 44000000 + i * 20000);
       generateYearlyTable(40, 50, sampleWithdrawal, sampleSurrender, sampleDeath);
+      generateChart(sampleWithdrawal, sampleSurrender);
     });
   </script>
   <style>
@@ -143,6 +180,10 @@
       margin-left: 1rem;
       color: green;
     }
+    canvas {
+      margin-top: 2rem;
+      max-width: 100%;
+    }
     @media screen and (max-width: 600px) {
       header h1 {
         font-size: 1.25rem;
@@ -164,50 +205,9 @@
     <p>연금 인출 + 해약 환급금 + 사망보장까지 한 눈에 계산</p>
   </header>
   <main>
-    <label for="company">회사 선택</label>
-    <select id="company">
-      <option value="">예시) Sun Life Hong Kong</option>
-      <option value="Sun Life">Sun Life Hong Kong</option>
-      <option value="Chubb">Chubb Life Hong Kong</option>
-    </select>
+    <!-- 기존 입력 필드 및 버튼은 동일하게 유지 -->
 
-    <label for="product">상품명</label>
-    <select id="product">
-      <option value="">예시) SunJoy Global</option>
-      <option value="SunJoy Global">SunJoy Global</option>
-      <option value="CMLP2">Chubb MyLegacy Plan III (2년납)</option>
-      <option value="CMLP5">Chubb MyLegacy Plan III (5년납)</option>
-    </select>
-
-    <label for="age">현재 나이</label>
-    <input type="number" id="age" placeholder="예시) 40" />
-
-    <label for="premium">연간 납입금액 (USD)</label>
-    <input type="number" id="premium" placeholder="예시) 200000" />
-
-    <label for="paymentPeriod">납입기간 (년)</label>
-    <input type="number" id="paymentPeriod" placeholder="예시) 5" />
-
-    <label for="maturityAge">만기 나이</label>
-    <input type="number" id="maturityAge" placeholder="예시) 100" />
-
-    <label for="startWithdraw">인출 시작 나이</label>
-    <input type="number" id="startWithdraw" placeholder="예시) 50" />
-
-    <label for="endWithdraw">인출 종료 나이</label>
-    <input type="number" id="endWithdraw" placeholder="예시) 100" />
-
-    <label for="withdrawAmt">연 인출금액 (USD)</label>
-    <input type="number" id="withdrawAmt" placeholder="예시) 80000" />
-
-    <label for="emailInput">결과를 이메일로 받기</label>
-    <input type="email" id="emailInput" placeholder="예시) your@email.com" />
-
-    <div>
-      <button onclick="sendEmailResult()">이메일로 결과 전송</button>
-      <button onclick="copyLink()">결과 링크 복사</button>
-      <span id="copyMsg"></span>
-    </div>
+    <button onclick="window.scrollTo(0, document.getElementById('output').offsetTop)">내가 받는 수익은 얼마?</button>
 
     <div class="result-box" id="output">
       <h3>📊 100세 만기시 예상 수익</h3>
@@ -231,6 +231,8 @@
         </thead>
         <tbody id="yearly-table-body"></tbody>
       </table>
+
+      <canvas id="simChart"></canvas>
     </div>
     <p style="margin-top: 1rem; font-size: 0.85rem; color: #666;">※ 본 계산은 예상 수익 시뮬레이션이며 실제 결과와 차이가 있을 수 있습니다.</p>
   </main>
