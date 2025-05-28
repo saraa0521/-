@@ -4,7 +4,7 @@
   <script src="https://cdn.emailjs.com/dist/email.min.js"></script>
   <script>
     (function(){
-      emailjs.init("YOUR_USER_ID"); // EmailJS 사용자 ID로 교체
+      emailjs.init("YOUR_USER_ID");
     })();
   </script>
   <meta charset="UTF-8" />
@@ -19,6 +19,40 @@
         setTimeout(() => document.getElementById('copyMsg').textContent = '', 2000);
       });
     }
+
+    function generateYearlyTable(startAge, years, withdrawal, surrender, death) {
+      const table = document.getElementById("yearly-table-body");
+      table.innerHTML = "";
+      for (let i = 0; i < years; i++) {
+        const age = startAge + i;
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${age}세</td>
+          <td>$${(withdrawal[i] || 0).toLocaleString()}</td>
+          <td>$${(surrender[i] || 0).toLocaleString()}</td>
+          <td>$${(death[i] || 0).toLocaleString()}</td>
+        `;
+        table.appendChild(row);
+      }
+    }
+
+    function sendEmailResult() {
+      const email = document.getElementById("emailInput").value;
+      const templateParams = {
+        email: email,
+        message: document.getElementById("output").innerText
+      };
+      emailjs.send("default_service", "template_id", templateParams)
+        .then(() => alert("결과가 이메일로 전송되었습니다."))
+        .catch(() => alert("이메일 전송에 실패했습니다."));
+    }
+
+    document.addEventListener("DOMContentLoaded", function() {
+      const sampleWithdrawal = Array.from({length: 50}, (_, i) => i >= 10 ? 80000 : 0);
+      const sampleSurrender = Array.from({length: 50}, (_, i) => 2176628);
+      const sampleDeath = Array.from({length: 50}, (_, i) => 44000000 + i * 20000);
+      generateYearlyTable(40, 50, sampleWithdrawal, sampleSurrender, sampleDeath);
+    });
   </script>
   <style>
     body {
@@ -29,22 +63,22 @@
     }
     header {
       background: linear-gradient(to right, #007aff, #00b894);
-      padding: 3rem 1rem 2rem;
+      padding: 2rem 1rem;
       color: white;
       text-align: center;
     }
     header h1 {
-      font-size: 2rem;
+      font-size: 1.5rem;
       margin-bottom: 0.5rem;
     }
     header p {
-      font-size: 1rem;
+      font-size: 0.9rem;
       opacity: 0.85;
     }
     main {
       width: 100%;
       max-width: 900px;
-      padding: 3rem 2rem;
+      padding: 2rem 1rem;
       margin: -2rem auto 2rem;
       background: #fefefe;
       border-radius: 20px;
@@ -52,7 +86,7 @@
     }
     label {
       display: block;
-      margin-top: 1.5rem;
+      margin-top: 1.2rem;
       font-weight: 600;
       font-size: 0.95rem;
     }
@@ -60,23 +94,20 @@
       padding: 0.75rem 1rem;
       font-size: 1rem;
       width: 100%;
-      max-width: 420px;
+      max-width: 100%;
       border-radius: 10px;
       border: 1px solid #ccc;
       margin-top: 0.3rem;
       background: #f9f9f9;
       color: #333;
-    }
-    input:focus, select:focus {
-      border-color: #007aff;
-      outline: none;
+      box-sizing: border-box;
     }
     input::placeholder {
       color: #aaa;
     }
     button {
-      margin-top: 2rem;
-      padding: 0.9rem 2rem;
+      margin-top: 1.5rem;
+      padding: 0.9rem 1.5rem;
       font-size: 1rem;
       background-color: #007aff;
       color: white;
@@ -84,46 +115,45 @@
       border-radius: 10px;
       cursor: pointer;
       transition: background-color 0.3s ease;
-    }
-    button:hover {
-      background-color: #0059cc;
+      margin-right: 1rem;
     }
     .result-box {
-      margin-top: 2.5rem;
+      margin-top: 2rem;
       background: #f4f6f8;
-      padding: 1.5rem;
+      padding: 1.2rem;
       border-radius: 12px;
       box-shadow: inset 0 0 10px rgba(0,0,0,0.03);
     }
-    .result-box h3 {
-      margin-top: 0;
+    .summary-table, .yearly-table {
+      margin-top: 1.5rem;
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
     }
-    canvas {
-      margin-top: 3rem;
-      max-width: 100%;
+    .summary-table th, .summary-table td, .yearly-table th, .yearly-table td {
+      border: 1px solid #ddd;
+      padding: 0.75rem 1rem;
+      text-align: left;
+      font-size: 0.9rem;
     }
-    @media (max-width: 600px) {
-  main {
-    padding: 2rem 1rem;
-  }
-  button {
-    width: 100%;
-    padding: 1rem;
-  }
-  input, select {
-    width: 100%;
-    font-size: 1rem;
-  }
-  label {
-    font-size: 0.9rem;
-  }
-  canvas {
-    margin-top: 2rem;
-  }
-}
+    .summary-table th, .yearly-table th {
+      background: #f1f1f1;
+    }
+    #copyMsg {
+      margin-left: 1rem;
+      color: green;
+    }
+    @media screen and (max-width: 600px) {
+      header h1 {
+        font-size: 1.25rem;
+      }
+      main {
+        padding: 1.5rem 1rem;
+      }
       button {
         width: 100%;
-        padding: 1rem;
+        margin-right: 0;
+        margin-top: 1rem;
       }
     }
   </style>
@@ -134,212 +164,75 @@
     <p>연금 인출 + 해약 환급금 + 사망보장까지 한 눈에 계산</p>
   </header>
   <main>
-    
-
-    <label>회사 선택</label>
-    <select id="company" onchange="autoSelectProduct()">
-      <option value="Sun Life">Sun Life Hong Kong Limited</option>
-      <option value="Chubb">Chubb Life Insurance Hong Kong Limited</option>
+    <label for="company">회사 선택</label>
+    <select id="company">
+      <option value="">예시) Sun Life Hong Kong</option>
+      <option value="Sun Life">Sun Life Hong Kong</option>
+      <option value="Chubb">Chubb Life Hong Kong</option>
     </select>
 
-    <label>상품 선택</label>
-    <select id="product" disabled>
+    <label for="product">상품명</label>
+    <select id="product">
+      <option value="">예시) SunJoy Global</option>
       <option value="SunJoy Global">SunJoy Global</option>
-      <option value="Chubb MyLegacy">Chubb MyLegacy Insurance Plan III</option>
+      <option value="CMLP2">Chubb MyLegacy Plan III (2년납)</option>
+      <option value="CMLP5">Chubb MyLegacy Plan III (5년납)</option>
     </select>
 
-    <label>가입 나이</label>
-    <input type="text" id="startAge" placeholder="예: 40" value="40" />
+    <label for="age">현재 나이</label>
+    <input type="number" id="age" placeholder="예시) 40" />
 
-    <label>연간 납입 금액 (USD)</label>
-    <input type="text" id="annualPremium" placeholder="예: 10000" value="10000" />
+    <label for="premium">연간 납입금액 (USD)</label>
+    <input type="number" id="premium" placeholder="예시) 200000" />
 
-    <label>납입 기간 (년)</label>
-    <input type="text" id="payPeriod" placeholder="예: 2" value="2" />
+    <label for="paymentPeriod">납입기간 (년)</label>
+    <input type="number" id="paymentPeriod" placeholder="예시) 5" />
 
-    <label>만기 나이</label>
-    <input type="text" id="maturityAge" placeholder="예: 100" value="100" />
+    <label for="maturityAge">만기 나이</label>
+    <input type="number" id="maturityAge" placeholder="예시) 100" />
 
-    <label>인출 시작 나이</label>
-    <input type="text" id="withdrawStartAge" placeholder="예: 65" value="65" />
+    <label for="startWithdraw">인출 시작 나이</label>
+    <input type="number" id="startWithdraw" placeholder="예시) 50" />
 
-    <label>인출 종료 나이</label>
-    <input type="text" id="withdrawEndAge" placeholder="예: 100" value="100" />
+    <label for="endWithdraw">인출 종료 나이</label>
+    <input type="number" id="endWithdraw" placeholder="예시) 100" />
 
-    <label>희망 연간 인출 금액 (USD)</label>
-    <input type="text" id="withdrawFixedAmount" placeholder="예: 40000" value="40000" />
+    <label for="withdrawAmt">연 인출금액 (USD)</label>
+    <input type="number" id="withdrawAmt" placeholder="예시) 80000" />
 
-    <button onclick="simulate()">시뮬레이션 시작하기</button>
+    <label for="emailInput">결과를 이메일로 받기</label>
+    <input type="email" id="emailInput" placeholder="예시) your@email.com" />
 
-    <div class="result-box" id="output"></div>
-
-    <div id="emailOptIn" style="display:none; margin-top:2rem;">
-      <label style="font-weight:600;"><input type="checkbox" id="sendEmailToggle" onchange="toggleEmailInput()" style="transform: scale(1.4); margin-right: 8px;"> 결과를 이메일로 받기 (이메일을 입력해주세요)</label>
-      <input type="email" id="userEmail" placeholder="예: your@email.com" style="display:none; margin-top:1rem;" />
-      <button onclick="sendEmail()" style="display:none; margin-top:1rem; background:#ff9800;">✉️ 결과 이메일로 받기</button>
+    <div>
+      <button onclick="sendEmailResult()">이메일로 결과 전송</button>
+      <button onclick="copyLink()">결과 링크 복사</button>
+      <span id="copyMsg"></span>
     </div>
 
-    <canvas id="yearlyChart"></canvas>
+    <div class="result-box" id="output">
+      <h3>📊 100세 만기시 예상 수익</h3>
+      <table class="summary-table">
+        <tr><th>총 납입금</th><td>$1,000,000</td></tr>
+        <tr><th>누적 연금 인출금</th><td>$4,080,000</td></tr>
+        <tr><th>100세 해약환급금</th><td>$2,176,628</td></tr>
+        <tr><th>총 수익금 (인출 + 해약환급)</th><td>$6,256,628</td></tr>
+        <tr><th>수익률</th><td>6.26배</td></tr>
+      </table>
 
-    <button onclick="saveSimulation()" style="margin-top: 1rem; background:#6c5ce7; color:white;">💾 설계 저장하기</button>
-    <div id="savedResults" style="margin-top: 2rem;"></div>
-    <button onclick="compareSimulations()" style="margin-top: 1rem; background:#fdcb6e; color:#222;">📊 설계 비교하기</button>
-
-    <button onclick="window.open('https://pf.kakao.com/_your_channel_code', '_blank')" style="margin-top: 2rem; background-color: #00b894; color: white; border: none; padding: 0.9rem 2rem; border-radius: 10px; cursor: pointer; margin-left: 0.5rem; margin-right: 0.5rem;">💬 상담 신청하기</button>
-
-    <button onclick="copyLink()" style="margin-top: 1rem; background:#6c757d; color:white; border: none; padding: 0.9rem 2rem; border-radius: 10px; cursor: pointer; margin-left: 0.5rem; margin-right: 0.5rem;">🔗 결과 링크 복사하기</button>
-    <span id="copyMsg" style="font-size:0.9rem; margin-left:10px; color:green;"></span>
-  <div style="margin-top: 3rem;">
-  <div style="margin-top: 2rem;">
-  <h3>📅 상담 가능한 날짜와 시간을 선택하세요</h3>
-  <label for="appointment-date">날짜 선택</label>
-  <input type="date" id="appointment-date" />
-
-  <label for="appointment-time" style="margin-top:1rem;">시간 선택</label>
-  <select id="appointment-time">
-    <option>10:00 AM</option>
-    <option>11:00 AM</option>
-    <option>2:00 PM</option>
-    <option>4:00 PM</option>
-    <option>6:00 PM</option>
-  </select>
-</div>
-</div>
-</main>
-<script>
-function autoSelectProduct() {
-  const company = document.getElementById('company').value;
-  const productSelect = document.getElementById('product');
-  productSelect.disabled = false;
-  if (company === 'Sun Life') {
-    productSelect.value = 'SunJoy Global';
-  } else if (company === 'Chubb') {
-    productSelect.value = 'Chubb MyLegacy';
-  }
-}
-
-function simulate() {
-  const startAge = parseInt(document.getElementById('startAge').value);
-  const annualPremium = parseFloat(document.getElementById('annualPremium').value);
-  const payPeriod = parseInt(document.getElementById('payPeriod').value);
-  const maturityAge = parseInt(document.getElementById('maturityAge').value);
-  const withdrawStartAge = parseInt(document.getElementById('withdrawStartAge').value);
-  const withdrawEndAge = parseInt(document.getElementById('withdrawEndAge').value);
-  const withdrawFixedAmount = parseFloat(document.getElementById('withdrawFixedAmount').value);
-
-  const totalPremium = annualPremium * payPeriod;
-  const totalWithdrawYears = withdrawEndAge - withdrawStartAge + 1;
-  const totalWithdrawAmount = withdrawFixedAmount * totalWithdrawYears;
-  const maturityRefund = 11435735; // 설계표 기준 정확 수치
-  const deathBenefit = 44266468;
-  const totalEarnings = totalWithdrawAmount + maturityRefund;
-  const totalROI = ((totalEarnings - totalPremium) / totalPremium) * 100;
-
-  document.getElementById('output').innerHTML = `
-    <h3>📊 ${maturityAge}세 만기시 예상 수익</h3>
-    <p>총 납입금: $${totalPremium.toLocaleString()}</p>
-    <p>${maturityAge}세 해약환급금: $${maturityRefund.toLocaleString()}</p>
-    <p>총 연금 인출 가능 금액: $${withdrawFixedAmount.toLocaleString()} × ${totalWithdrawYears}년 = $${totalWithdrawAmount.toLocaleString()}</p>
-    <p>총 수익금액: $${totalEarnings.toLocaleString()}</p>
-    <p>총 수익률: ${totalROI.toFixed(2)}%</p>
-    <p style="font-size: 0.9rem; color: #666;">※ 위 시뮬레이션은 예상치이며, 실제 수익은 변동될 수 있습니다.</p>
-    <p>${maturityAge}세 사망보험금: $${deathBenefit.toLocaleString()}</p>
-  `;
-
-  document.getElementById('emailOptIn').style.display = 'block';
-
-  const labels = [], withdraws = [], refunds = [], deaths = [];
-  for (let age = startAge; age <= maturityAge; age++) {
-    labels.push(age);
-    withdraws.push(age >= withdrawStartAge && age <= withdrawEndAge ? withdrawFixedAmount : 0);
-    refunds.push(age === maturityAge ? maturityRefund : 0);
-    deaths.push(age === maturityAge ? deathBenefit : 0);
-  }
-  const ctx = document.getElementById('yearlyChart').getContext('2d');
-  new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels: labels,
-      datasets: [
-        { label: '연금 인출액', data: withdraws, backgroundColor: '#007aff' },
-        { label: '해약환급금', data: refunds, backgroundColor: '#00cec9' },
-        { label: '사망보험금', data: deaths, backgroundColor: '#ff7675' }
-      ]
-    },
-    options: {
-      responsive: true,
-      plugins: { legend: { position: 'top' }, title: { display: true, text: '연도별 수익 시뮬레이션' } },
-      scales: { y: { beginAtZero: true } }
-    }
-  });
-}
-function toggleEmailInput() {
-  const show = document.getElementById('sendEmailToggle').checked;
-  document.getElementById('userEmail').style.display = show ? 'block' : 'none';
-  document.querySelector('button[onclick="sendEmail()"]')?.style.setProperty('display', show ? 'block' : 'none');
-}
-function sendEmail() {
-  const email = document.getElementById('userEmail').value;
-  if (!email || !email.includes('@')) {
-    alert('유효한 이메일을 입력하세요');
-    return;
-  }
-
-  const resultHtml = document.getElementById('output').innerHTML;
-  const templateParams = {
-    to_email: email,
-    message: resultHtml
-  };
-
-  emailjs.send('YOUR_SERVICE_ID', 'YOUR_TEMPLATE_ID', templateParams)
-    .then(function(response) {
-       alert('결과가 이메일로 전송되었습니다!');
-    }, function(error) {
-       alert('이메일 전송 실패: ' + JSON.stringify(error));
-    });
-}
-  // 이 alert는 더 이상 필요하지 않으므로 삭제됨
-// 설계 저장 및 비교 기능 추가
-function saveSimulation() {
-  const result = document.getElementById('output').innerHTML;
-  if (!result) {
-    alert('먼저 시뮬레이션을 실행해주세요.');
-    return;
-  }
-  const history = JSON.parse(localStorage.getItem('simResults') || '[]');
-  history.push(result);
-  localStorage.setItem('simResults', JSON.stringify(history));
-  alert('설계가 저장되었습니다!');
-  renderSavedResults();
-}
-
-function renderSavedResults() {
-  const history = JSON.parse(localStorage.getItem('simResults') || '[]');
-  const container = document.getElementById('savedResults');
-  if (!container) return;
-  container.innerHTML = '<h3>💾 저장된 설계 비교</h3>' +
-    history.map((res, i) => `<div style='margin:1rem 0; padding:1rem; border:1px dashed #ccc;'>#${i+1}<br/>${res}</div>`).join('');
-}
-
-window.onload = renderSavedResults;
-
-// 설계 비교 기능: 최근 저장된 두 개 결과 비교 (단순 문자열 기준)
-function compareSimulations() {
-  const history = JSON.parse(localStorage.getItem('simResults') || '[]');
-  if (history.length < 2) {
-    alert('비교하려면 최소 2개의 설계를 저장해야 합니다.');
-    return;
-  }
-  const lastTwo = history.slice(-2);
-  const comparison = `
-    <h3>📊 설계 비교</h3>
-    <div style='display:flex; gap:1rem; flex-wrap:wrap;'>
-      <div style='flex:1; min-width:300px; border:1px solid #ccc; padding:1rem;'>${lastTwo[0]}</div>
-      <div style='flex:1; min-width:300px; border:1px solid #ccc; padding:1rem;'>${lastTwo[1]}</div>
+      <h3>📅 연도별 시뮬레이션</h3>
+      <table class="yearly-table">
+        <thead>
+          <tr>
+            <th>나이</th>
+            <th>연금 인출금</th>
+            <th>해약환급금</th>
+            <th>사망보험금</th>
+          </tr>
+        </thead>
+        <tbody id="yearly-table-body"></tbody>
+      </table>
     </div>
-  `;
-  document.getElementById('savedResults').insertAdjacentHTML('beforeend', comparison);
-}
-</script>
+    <p style="margin-top: 1rem; font-size: 0.85rem; color: #666;">※ 본 계산은 예상 수익 시뮬레이션이며 실제 결과와 차이가 있을 수 있습니다.</p>
+  </main>
 </body>
 </html>
