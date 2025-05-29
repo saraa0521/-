@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>글로벌 연금 시뮬레이터</title>
   <link href="https://fonts.googleapis.com/css2?family=Pretendard&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     body {
       font-family: 'Pretendard', sans-serif;
@@ -79,113 +80,38 @@
   <main>
     <section class="section">
       <h2>A. 연금 기본 정보 입력</h2>
-      <label for="company">① 회사 선택</label>
-      <select id="company">
-        <option>Sun Life</option>
-        <option>Chubb</option>
-      </select>
-
-      <label for="product">② 상품명</label>
-      <select id="product">
-        <option>선택하세요</option>
-      </select>
-
-      <label for="payYears">③ 납입 기간</label>
-      <select id="payYears">
-        <option value="2">2년</option>
-        <option value="5">5년</option>
-        <option value="10">10년</option>
-      </select>
-
-      <label for="annualPay">④ 연간 납입금액 (USD)</label>
-      <input type="number" id="annualPay" placeholder="예시) 50000" />
-
-      <label for="payTerm">⑤ 납입기간 (년)</label>
-      <input type="number" id="payTerm" placeholder="예시) 2" />
-
-      <label for="withdrawal">⑥ 연간 인출금액 (USD)</label>
-      <input type="number" id="withdrawal" placeholder="예시) 30000" />
-
-      <label for="startAge">⑦ 인출 시작 나이</label>
-      <input type="number" id="startAge" placeholder="예시) 65" />
-
-      <label for="endAge">⑧ 인출 종료 나이</label>
-      <input type="number" id="endAge" placeholder="예시) 100" />
-
-      <button onclick="startSimulation()">시뮬레이션 시작</button>
+      <label for="pdfUpload">① 설계표 PDF 업로드</label>
+      <input type="file" id="pdfUpload" accept="application/pdf">
+      <button onclick="uploadPdf()">설계표 분석 요청</button>
     </section>
-
-    <section class="section" id="resultSection" style="display:none;">
-      <h2>B. 예상 결과</h2>
-      <h3>📊 100세 기준 예상 수익</h3>
-      <p>총 납입금액: <span class="highlight" id="totalPaid"></span> USD</p>
-      <p>총 인출금액: <span class="highlight" id="totalWithdrawn"></span> USD</p>
-      <p>해약환급금: <span class="highlight" id="surrenderValue"></span> USD</p>
-      <p>총 수익금액: <span class="highlight" id="totalProfit"></span> USD</p>
-      <p>수익률: <span class="highlight" id="returnRate"></span> 배</p>
-      <p>※ 실제 수익은 변동될 수 있습니다.</p>
-    </section>
-
-    <section class="section" id="guidanceSection">
-      <h2>C. 고객 맞춤 안내</h2>
-      <p>📌 <strong>이 연금인출로 당신의 노후가 해결될까요?</strong></p>
-      <ul>
-        <li>충분할까?</li>
-        <li>언제까지 받을 수 있지?</li>
-        <li>결말 단계의 노후는 안전한가요?</li>
-        <li>이제라도 준비해야하나요?</li>
-      </ul>
-      <p><strong>📌 당신은 무엇을 하고 싶은가요?</strong></p>
-      <ul>
-        <li>지금부터 노후 준비해야</li>
-        <li>앞당긴 은퇴에 맞춰 전략 필요</li>
-      </ul>
-      <p><strong>노후를 위해 연금준비해야 한다는 당신에게</strong></p>
-    </section>
-
-    <section class="section" id="footerSection">
-      <h2>D. 모바일 최적화 및 챗봇 연결</h2>
-      <p>📱 모바일 화면에서도 깔끔하게 보이도록 디자인되었습니다.</p>
-      <p>💬 더 궁금하신 점이 있다면 <a href="https://gogoglobal.life" target="_blank">GO글 챗봇</a>에게 물어보세요.</p>
+    <section class="section">
+      <h2>👉 분석 결과 확인</h2>
+      <pre id="ocrOutput">분석 결과가 여기에 표시됩니다.</pre>
     </section>
   </main>
   <script>
-    function startSimulation() {
-      const annual = Number(document.getElementById('annualPay').value);
-      const term = Number(document.getElementById('payTerm').value);
-      const withdrawal = Number(document.getElementById('withdrawal').value);
-      const startAge = Number(document.getElementById('startAge').value);
-      const endAge = Number(document.getElementById('endAge').value);
-
-      const totalPaid = annual * term;
-      const totalWithdrawn = withdrawal * (endAge - startAge + 1);
-      const surrenderValue = Math.floor(totalPaid * 0.4);
-      const totalProfit = totalWithdrawn + surrenderValue;
-      const returnRate = (totalProfit / totalPaid).toFixed(2);
-
-      document.getElementById('totalPaid').textContent = totalPaid.toLocaleString();
-      document.getElementById('totalWithdrawn').textContent = totalWithdrawn.toLocaleString();
-      document.getElementById('surrenderValue').textContent = surrenderValue.toLocaleString();
-      document.getElementById('totalProfit').textContent = totalProfit.toLocaleString();
-      document.getElementById('returnRate').textContent = returnRate;
-
-      document.getElementById('resultSection').style.display = 'block';
-    }
-
-    const companySelect = document.getElementById('company');
-    const productSelect = document.getElementById('product');
-
-    companySelect.addEventListener('change', () => {
-      const company = companySelect.value;
-      productSelect.innerHTML = '';
-      if (company === 'Sun Life') {
-        productSelect.innerHTML += '<option value="SunJoy2">SunJoy Global - 2년납</option>';
-        productSelect.innerHTML += '<option value="SunJoy5">SunJoy Global - 5년납</option>';
-      } else if (company === 'Chubb') {
-        productSelect.innerHTML += '<option value="CMLP2">CMLP 2년납</option>';
-        productSelect.innerHTML += '<option value="CMLP5">CMLP 5년납</option>';
+    async function uploadPdf() {
+      const fileInput = document.getElementById('pdfUpload');
+      if (!fileInput.files.length) {
+        alert('PDF 파일을 업로드해주세요.');
+        return;
       }
-    });
+      const formData = new FormData();
+      formData.append('file', fileInput.files[0]);
+
+      try {
+        const response = await fetch('https://n8n.insurance-sim.vercel.app/webhook/upload-insurance', {
+          method: 'POST',
+          body: formData
+        });
+        const result = await response.json();
+        document.getElementById('ocrOutput').textContent = JSON.stringify(result, null, 2);
+      } catch (error) {
+        alert('❗ 분석 요청 중 오류가 발생했습니다.');
+        console.error(error);
+      }
+    }
   </script>
 </body>
 </html>
+
